@@ -21,7 +21,19 @@ cd iq_eq_tests/
 ```
 Создание виртуального окружения
 ```sh
-poetry init
+poetry install
+```
+Запуск виртуального окружения
+```sh
+poetry shell
+```
+Применение миграций
+```sh
+python iq_tests/manage.py migrate
+```
+Запуск сервера
+```sh
+python iq_tests/manage.py runserver
 ```
 
 ## Использование
