@@ -40,7 +40,7 @@ python iq_tests/manage.py runserver
 
 1. Создание теста
 ```sh
-GET: http://127.0.0.1:8000/api/v1/tests/
+POST: http://127.0.0.1:8000/api/v1/tests/create/
 ```
 Response
 ```sh
@@ -50,7 +50,7 @@ Response
 ```
 2. Завершение IQ теста
 ```sh
-POST: http://127.0.0.1:8000/api/v1/tests/<str:login>/finish_iq/
+PUT: http://127.0.0.1:8000/api/v1/tests/<str:login>/finish_iq/
 ```
 Payload
 ```sh
@@ -60,7 +60,7 @@ Payload
 ```
 3. Завершение EQ теста
 ```sh
-POST: http://127.0.0.1:8000/api/v1/tests/<str:login>/finish_eq/
+PUT: http://127.0.0.1:8000/api/v1/tests/<str:login>/finish_eq/
 ```
 Payload
 ```sh
