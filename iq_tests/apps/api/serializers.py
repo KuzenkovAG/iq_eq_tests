@@ -1,12 +1,13 @@
 import datetime as dt
 
 from django.conf import settings
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.validators import ValidationError
 
 from .fields import CreatableSlugRelatedField
 from ..verification.models import EQTest, EQTestResult, IQTest, Result, Test
+
+RESULT_LEN = 5
 
 
 class TestCreateSerializer(serializers.ModelSerializer):
@@ -24,27 +25,17 @@ class IQTestSerializer(serializers.ModelSerializer):
         read_only = ('duration',)
 
     def validate(self, data):
-        login = self._kwargs.get('data').get('login')
-        tests = get_object_or_404(
-            Test.objects.select_related('iq_test'),
-            login=login
-        )
-        if tests.iq_test.duration is not None:
+        test = self.instance
+        if test.iq_test.duration is not None:
             raise ValidationError('Test already passed.')
         return data
 
-    def create(self, validated_data):
-        result = validated_data.get('result')
-        login = validated_data.get('login')
-        test = get_object_or_404(
-            Test.objects.select_related('iq_test'),
-            login=login
-        )
+    def update(self, test, validated_data):
         duration = dt.datetime.now(dt.timezone.utc) - test.start_date
         test.iq_test.duration = duration
-        test.iq_test.result = result
+        test.iq_test.result = validated_data.get('result')
         test.iq_test.save()
-        return test
+        return test.iq_test
 
 
 class EQTestSerializer(serializers.ModelSerializer):
@@ -65,27 +56,20 @@ class EQTestSerializer(serializers.ModelSerializer):
                 raise ValidationError(
                     f'Each element should be in list - {available}.'
                 )
-        if len(values) != settings.RESULT_LEN:
-            raise ValidationError('Results should be have only 5 elements.')
+        if len(values) != RESULT_LEN:
+            raise ValidationError(
+                f'Results should be have only {RESULT_LEN} elements.'
+            )
         return values
 
     def validate(self, data):
-        login = self._kwargs.get('data').get('login')
-        tests = get_object_or_404(
-            Test.objects.select_related('eq_test'),
-            login=login
-        )
-        if tests.eq_test.duration is not None:
+        test = self.instance
+        if test.eq_test.duration is not None:
             raise ValidationError('Test already passed.')
         return data
 
-    def create(self, validated_data):
+    def update(self, test, validated_data):
         results = validated_data.get('result')
-        login = validated_data.get('login')
-        test = get_object_or_404(
-            Test.objects.select_related('eq_test'),
-            login=login
-        )
         duration = dt.datetime.now(dt.timezone.utc) - test.start_date
         test.eq_test.duration = duration
         test.eq_test.save()
@@ -95,7 +79,7 @@ class EQTestSerializer(serializers.ModelSerializer):
             for result in results
         ]
         EQTestResult.objects.bulk_create(objects)
-        return test
+        return test.eq_test
 
 
 class TestViewSerializer(serializers.ModelSerializer):

@@ -118,7 +118,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 TEST_UUID_LENGTH = 10
 AVAILABLE_CHOICES = tuple('абвгд')
-RESULT_LEN = 5
 
 MIN_IQ_RESULT = 0
 MAX_IQ_RESULT = 50

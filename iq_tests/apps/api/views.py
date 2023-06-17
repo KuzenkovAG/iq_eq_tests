@@ -1,50 +1,43 @@
-from django.shortcuts import get_object_or_404
-from rest_framework import status
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
+from rest_framework import generics
 
-from . import serializers
-from .utils import create_new_test
+from . import serializers, utils
 from ..verification.models import Test
 
 
-@api_view(['GET'])
-def test_create_view(request):
+class TestCreateView(generics.CreateAPIView):
     """Create test."""
-    if request.method == 'GET':
-        test = create_new_test()
-        serializer = serializers.TestCreateSerializer(test)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(status=status.HTTP_400_BAD_REQUEST)
+    serializer_class = serializers.TestCreateSerializer
+
+    def perform_create(self, serializer):
+        eq_test = utils.create_eq_test()
+        iq_test = utils.create_iq_test()
+        serializer.save(eq_test=eq_test, iq_test=iq_test)
 
 
-@api_view(['GET'])
-def test_result_view(request, login):
-    """View test result."""
-    if request.method == 'GET':
-        test = get_object_or_404(Test, login=login)
-        serializer = serializers.TestViewSerializer(test)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    return Response(status=status.HTTP_400_BAD_REQUEST)
+class TestRetrieveView(generics.RetrieveAPIView):
+    """Get test."""
+    serializer_class = serializers.TestViewSerializer
+    queryset = Test.objects.all()
+    lookup_field = 'login'
 
 
-@api_view(['POST'])
-def finish_iq_test(request, login):
-    """Save iq test result."""
-    request.data['login'] = login
-    serializer = serializers.IQTestSerializer(data=request.data)
-    if serializer.is_valid():
+class IQTestUpdateView(generics.UpdateAPIView):
+    """Update iq test result."""
+    serializer_class = serializers.IQTestSerializer
+    queryset = Test.objects.all()
+    lookup_field = 'login'
+
+    def perform_update(self, serializer):
+        login = self.kwargs.get('login')
         serializer.save(login=login)
-        return Response(status=status.HTTP_200_OK)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['POST'])
-def finish_eq_test(request, login):
+class EQTestUpdateView(generics.UpdateAPIView):
     """Save eq test result."""
-    request.data['login'] = login
-    serializer = serializers.EQTestSerializer(data=request.data)
-    if serializer.is_valid():
+    serializer_class = serializers.EQTestSerializer
+    queryset = Test.objects.all()
+    lookup_field = 'login'
+
+    def perform_update(self, serializer):
+        login = self.kwargs.get('login')
         serializer.save(login=login)
-        return Response(status=status.HTTP_200_OK)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
